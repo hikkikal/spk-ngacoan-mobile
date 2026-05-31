@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../data/models/supplier_model.dart';
-import '../../../blocs/supplier/supplier_bloc.dart';
-import '../../../blocs/supplier/supplier_event.dart';
-import '../../../blocs/supplier/supplier_state.dart';
-import 'supplier_form_dialog.dart';
+import '../../../../data/models/criteria_model.dart';
+import '../../../blocs/criteria/criteria_bloc.dart';
+import '../../../blocs/criteria/criteria_event.dart';
+import '../../../blocs/criteria/criteria_state.dart';
+import 'criteria_form_dialog.dart';
 
-class SupplierPage extends StatefulWidget {
-  const SupplierPage({super.key});
+class CriteriaPage extends StatefulWidget {
+  const CriteriaPage({super.key});
 
   @override
-  State<SupplierPage> createState() => _SupplierPageState();
+  State<CriteriaPage> createState() => _CriteriaPageState();
 }
 
-class _SupplierPageState extends State<SupplierPage> {
+class _CriteriaPageState extends State<CriteriaPage> {
   @override
   void initState() {
     super.initState();
-    context.read<SupplierBloc>().add(const SupplierLoadRequested());
+    context.read<CriteriaBloc>().add(const CriteriaLoadRequested());
   }
 
-  List<SupplierModel> _getSuppliers(SupplierState state) {
-    if (state is SupplierLoaded) return state.suppliers;
-    if (state is SupplierActionLoading) return state.suppliers;
-    if (state is SupplierActionSuccess) return state.suppliers;
-    if (state is SupplierActionError) return state.suppliers;
+  List<CriteriaModel> _getCriterias(CriteriaState state) {
+    if (state is CriteriaLoaded) return state.criterias;
+    if (state is CriteriaActionLoading) return state.criterias;
+    if (state is CriteriaActionSuccess) return state.criterias;
+    if (state is CriteriaActionError) return state.criterias;
     return [];
   }
 
@@ -34,30 +34,30 @@ class _SupplierPageState extends State<SupplierPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => BlocProvider.value(
-        value: context.read<SupplierBloc>(),
-        child: const SupplierFormDialog(),
+        value: context.read<CriteriaBloc>(),
+        child: const CriteriaFormDialog(),
       ),
     );
   }
 
-  void _openEditDialog(SupplierModel supplier) {
+  void _openEditDialog(CriteriaModel criteria) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => BlocProvider.value(
-        value: context.read<SupplierBloc>(),
-        child: SupplierFormDialog(supplier: supplier),
+        value: context.read<CriteriaBloc>(),
+        child: CriteriaFormDialog(criteria: criteria),
       ),
     );
   }
 
-  void _confirmDelete(SupplierModel supplier) {
+  void _confirmDelete(CriteriaModel criteria) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
-          'Hapus Supplier',
+          'Hapus Kriteria',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: RichText(
@@ -68,9 +68,9 @@ class _SupplierPageState extends State<SupplierPage> {
               height: 1.5,
             ),
             children: [
-              const TextSpan(text: 'Hapus supplier '),
+              const TextSpan(text: 'Hapus kriteria '),
               TextSpan(
-                text: supplier.name,
+                text: criteria.name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
@@ -89,8 +89,8 @@ class _SupplierPageState extends State<SupplierPage> {
             onPressed: () {
               Navigator.pop(ctx);
               context
-                  .read<SupplierBloc>()
-                  .add(SupplierDeleteRequested(id: supplier.id));
+                  .read<CriteriaBloc>()
+                  .add(CriteriaDeleteRequested(id: criteria.id));
             },
             child: const Text(
               'Hapus',
@@ -104,9 +104,9 @@ class _SupplierPageState extends State<SupplierPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<SupplierBloc, SupplierState>(
+    return BlocListener<CriteriaBloc, CriteriaState>(
       listener: (context, state) {
-        if (state is SupplierActionSuccess) {
+        if (state is CriteriaActionSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -118,7 +118,7 @@ class _SupplierPageState extends State<SupplierPage> {
             ),
           );
         }
-        if (state is SupplierActionError) {
+        if (state is CriteriaActionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -134,32 +134,30 @@ class _SupplierPageState extends State<SupplierPage> {
       child: SafeArea(
         child: Column(
           children: [
-            // ── Header
-            _SupplierHeader(onAdd: _openAddDialog),
+            // Header
+            _CriteriaHeader(onAdd: _openAddDialog),
 
-            // ── Content
+            // Content
             Expanded(
-              child: BlocBuilder<SupplierBloc, SupplierState>(
+              child: BlocBuilder<CriteriaBloc, CriteriaState>(
                 builder: (context, state) {
-                  if (state is SupplierLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                  if (state is CriteriaLoading) {
+                    return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (state is SupplierError) {
+                  if (state is CriteriaError) {
                     return _ErrorView(
                       message: state.message,
                       onRetry: () => context
-                          .read<SupplierBloc>()
-                          .add(const SupplierLoadRequested()),
+                          .read<CriteriaBloc>()
+                          .add(const CriteriaLoadRequested()),
                     );
                   }
 
-                  final suppliers = _getSuppliers(state);
-                  final isActionLoading = state is SupplierActionLoading;
+                  final criterias = _getCriterias(state);
+                  final isActionLoading = state is CriteriaActionLoading;
 
-                  if (suppliers.isEmpty) {
+                  if (criterias.isEmpty) {
                     return _EmptyView(onAdd: _openAddDialog);
                   }
 
@@ -167,16 +165,15 @@ class _SupplierPageState extends State<SupplierPage> {
                     children: [
                       ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                        itemCount: suppliers.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 10),
+                        itemCount: criterias.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
-                          final supplier = suppliers[index];
-                          return _SupplierCard(
-                            supplier: supplier,
+                          final criteria = criterias[index];
+                          return _CriteriaCard(
+                            criteria: criteria,
                             index: index,
-                            onEdit: () => _openEditDialog(supplier),
-                            onDelete: () => _confirmDelete(supplier),
+                            onEdit: () => _openEditDialog(criteria),
+                            onDelete: () => _confirmDelete(criteria),
                           );
                         },
                       ),
@@ -201,12 +198,12 @@ class _SupplierPageState extends State<SupplierPage> {
   }
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────────────────────
 
-class _SupplierHeader extends StatelessWidget {
+class _CriteriaHeader extends StatelessWidget {
   final VoidCallback onAdd;
 
-  const _SupplierHeader({required this.onAdd});
+  const _CriteriaHeader({required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -228,17 +225,17 @@ class _SupplierHeader extends StatelessWidget {
               GestureDetector(
                 onTap: () => Scaffold.of(context).openDrawer(),
                 child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                   child: const Icon(Icons.menu, color: Colors.white, size: 20),
                 ),
               ),
               const SizedBox(width: 12),
               const Text(
-                'Supplier',
+                'Kriteria',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -248,8 +245,6 @@ class _SupplierHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-
-          // Title + Tambah button
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -258,7 +253,7 @@ class _SupplierHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Mitra Pemasok',
+                      'Parameter Kriteria',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -267,7 +262,7 @@ class _SupplierHeader extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Kelola daftar supplier yang akan dievaluasi.',
+                      'Kelola kriteria penilaian EDAS untuk evaluasi supplier.',
                       style: TextStyle(
                         color: Colors.white54,
                         fontSize: 12,
@@ -312,16 +307,16 @@ class _SupplierHeader extends StatelessWidget {
   }
 }
 
-// ─── Supplier Card ────────────────────────────────────────────────────────────
+// ── Criteria Card ─────────────────────────────────────────────────────────────
 
-class _SupplierCard extends StatelessWidget {
-  final SupplierModel supplier;
+class _CriteriaCard extends StatelessWidget {
+  final CriteriaModel criteria;
   final int index;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _SupplierCard({
-    required this.supplier,
+  const _CriteriaCard({
+    required this.criteria,
     required this.index,
     required this.onEdit,
     required this.onDelete,
@@ -329,7 +324,7 @@ class _SupplierCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final kode = 'A${index + 1}';
+    final isBenefit = criteria.type == 'benefit';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -341,7 +336,7 @@ class _SupplierCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Kode badge
+          // Kode dari API
           Container(
             width: 36,
             height: 36,
@@ -351,7 +346,7 @@ class _SupplierCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                kode,
+                criteria.code,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -368,65 +363,84 @@ class _SupplierCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  supplier.name,
+                  criteria.name,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
+                    // Tipe badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isBenefit
+                            ? const Color(0xFF2DD4BF).withOpacity(0.1)
+                            : AppTheme.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                       child: Text(
-                        supplier.address,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
+                        isBenefit ? 'Benefit' : 'Cost',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isBenefit
+                              ? const Color(0xFF2DD4BF)
+                              : AppTheme.error,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+
+                    // Skala Input
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Skala: ${criteria.weightInput.toInt()}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+
+                    // Bobot Relatif
+                    if (criteria.normalizedWeight != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Bobot: ${(criteria.normalizedWeight! * 100).toStringAsFixed(1)}%',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF8B5CF6),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                if (supplier.phone != null && supplier.phone!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.phone_outlined,
-                        size: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        supplier.phone!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Tidak ada nomor telepon',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textSecondary,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -480,7 +494,7 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-// ─── Empty View ───────────────────────────────────────────────────────────────
+// ── Empty View ────────────────────────────────────────────────────────────────
 
 class _EmptyView extends StatelessWidget {
   final VoidCallback onAdd;
@@ -502,14 +516,14 @@ class _EmptyView extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.store_outlined,
+                Icons.list_alt_outlined,
                 size: 40,
                 color: AppTheme.primary,
               ),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Belum ada supplier',
+              'Belum ada kriteria',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -518,7 +532,7 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Tambahkan supplier pertama untuk mulai evaluasi.',
+              'Tambahkan kriteria untuk mulai evaluasi EDAS.',
               style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -540,7 +554,7 @@ class _EmptyView extends StatelessWidget {
                     Icon(Icons.add, color: Colors.white, size: 16),
                     SizedBox(width: 6),
                     Text(
-                      'Tambah Supplier',
+                      'Tambah Kriteria',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -558,7 +572,7 @@ class _EmptyView extends StatelessWidget {
   }
 }
 
-// ─── Error View ───────────────────────────────────────────────────────────────
+// ── Error View ────────────────────────────────────────────────────────────────
 
 class _ErrorView extends StatelessWidget {
   final String message;

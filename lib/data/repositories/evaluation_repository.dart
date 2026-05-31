@@ -13,7 +13,6 @@ class EvaluationRepository {
     final List data = response.data['data'];
     return data.map((e) => EvaluationModel.fromJson(e)).toList();
   }
-
   Future<void> bulkInsertEvaluations(List<Map<String, dynamic>> evaluations) async {
     await _dioClient.dio.post(
       ApiConstants.evaluationsBulk,

@@ -10,6 +10,9 @@ import 'data/repositories/decision_history_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/dashboard/dashboard_bloc.dart';
+import 'presentation/blocs/supplier/supplier_bloc.dart';
+import 'presentation/blocs/decision_result/decision_result_bloc.dart';
+import 'presentation/blocs/decision_history/decision_history_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class MyApp extends StatefulWidget {
@@ -62,6 +65,23 @@ class _MyAppState extends State<MyApp> {
           BlocProvider(
             create: (context) => DashboardBloc(
               dashboardRepository: context.read<DashboardRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => SupplierBloc(
+              supplierRepository: context.read<SupplierRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => DecisionResultBloc(
+              historyRepository: context.read<DecisionHistoryRepository>(),
+              evaluationRepository: context.read<EvaluationRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => DecisionHistoryBloc(
+              evaluationRepository: context.read<EvaluationRepository>(),
+              historyRepository: context.read<DecisionHistoryRepository>(),
             ),
           ),
         ],

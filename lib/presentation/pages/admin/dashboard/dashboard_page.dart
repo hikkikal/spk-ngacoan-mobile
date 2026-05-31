@@ -12,6 +12,17 @@ import '../../../blocs/dashboard/dashboard_state.dart';
 import '../../../../data/repositories/supplier_repository.dart';
 import '../../../blocs/supplier/supplier_bloc.dart';
 import '../supplier/supplier_page.dart';
+import '../../../../data/repositories/criteria_repository.dart';
+import '../../../blocs/criteria/criteria_bloc.dart';
+import '../criteria/criteria_page.dart';
+import '../../../../data/repositories/evaluation_repository.dart';
+import '../../../blocs/evaluation/evaluation_bloc.dart';
+import '../evaluation/evaluation_page.dart';
+import '../../../../data/repositories/decision_history_repository.dart';
+import '../../../blocs/decision_result/decision_result_bloc.dart';
+import '../../../blocs/decision_history/decision_history_bloc.dart';
+import '../decision_result/decision_result_page.dart';
+import '../decision_history/decision_history_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -65,7 +76,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildPage(int index) {
     switch (index) {
       case 0:
-        return const _DashboardHome();
+      return const _DashboardHome();
       case 1:
       return BlocProvider(
         create: (context) => SupplierBloc(
@@ -73,14 +84,46 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         child: const SupplierPage(),
       );
-      default:
-        return _PlaceholderPage(
-          label: _navItems[index].label,
-          icon: _navItems[index].activeIcon,
+      case 2:
+      return BlocProvider(
+        create: (context) => CriteriaBloc(
+          criteriaRepository: context.read<CriteriaRepository>(),
+        ),
+        child: const CriteriaPage(),
+      );
+      case 3:
+        return BlocProvider(
+          create: (context) => EvaluationBloc(
+            evaluationRepository: context.read<EvaluationRepository>(),
+            supplierRepository: context.read<SupplierRepository>(),
+            criteriaRepository: context.read<CriteriaRepository>(),
+          ),
+          child: const EvaluationPage(),
         );
+      case 4:
+      return BlocProvider(
+        create: (context) => DecisionResultBloc(
+          historyRepository: context.read<DecisionHistoryRepository>(),
+          evaluationRepository: context.read<EvaluationRepository>(),
+        ),
+        child: const DecisionResultPage(),
+      );
+      case 5:
+        return BlocProvider(
+          create: (context) => DecisionHistoryBloc(
+            historyRepository: context.read<DecisionHistoryRepository>(),
+            evaluationRepository: context.read<EvaluationRepository>(),
+          ),
+          child: const DecisionHistoryPage(),
+        );
+        default:
+          return _PlaceholderPage(
+            label: _navItems[index].label,
+            icon: _navItems[index].activeIcon,
+          );
+      }
     }
   }
-}
 
 // ─── Nav Item Model ───────────────────────────────────────────────────────────
 
@@ -411,13 +454,9 @@ class _DashboardHome extends StatelessWidget {
                             Expanded(
                               child: _StatCard(
                                 title: 'Status Sistem',
-                                value: stats != null
-                                    ? (stats.matrixReady ? 'Siap' : 'Belum')
-                                    : '-',
+                                value: stats != null ? stats.systemStatus : '-',
                                 subtitle: stats != null
-                                    ? (stats.matrixReady
-                                        ? 'Siap dikalkulasi'
-                                        : 'Lengkapi data')
+                                    ? (stats.matrixReady ? 'Siap dikalkulasi' : 'Lengkapi data')
                                     : 'Memuat...',
                                 icon: Icons.show_chart,
                                 iconColor: stats != null
@@ -425,6 +464,7 @@ class _DashboardHome extends StatelessWidget {
                                         ? const Color(0xFF8B5CF6)
                                         : const Color(0xFFF59E0B))
                                     : const Color(0xFF8B5CF6),
+                                isSmallValue: false,
                               ),
                             ),
                           ],
