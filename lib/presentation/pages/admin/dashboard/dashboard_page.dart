@@ -212,11 +212,11 @@ class _SideDrawer extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = items[index];
                   final realIndex = allItems.indexOf(item);
-                  final isSelected = selectedIndex == index;
+                  final isSelected = selectedIndex == realIndex;
                   return _DrawerItem(
                     item: item,
                     isSelected: isSelected,
-                    onTap: () => onItemSelected(index),
+                    onTap: () => onItemSelected(realIndex),
                   );
                 },
               ),
