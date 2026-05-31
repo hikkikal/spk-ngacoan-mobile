@@ -7,6 +7,7 @@ import 'data/repositories/criteria_repository.dart';
 import 'data/repositories/evaluation_repository.dart';
 import 'data/repositories/decision_history_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
+import 'data/repositories/user_repository.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/auth/auth_event.dart';
 import 'app.dart';
@@ -28,6 +29,7 @@ void main() async {
   final evaluationRepository = EvaluationRepository(dioClient: dioClient);
   final decisionHistoryRepository = DecisionHistoryRepository(dioClient: dioClient);
   final dashboardRepository = DashboardRepository(dioClient: dioClient);
+  final userRepository = UserRepository(dioClient: dioClient);
 
   // Init auth bloc
   final authBloc = AuthBloc(authRepository: authRepository)
@@ -42,6 +44,7 @@ void main() async {
       evaluationRepository: evaluationRepository,
       decisionHistoryRepository: decisionHistoryRepository,
       dashboardRepository: dashboardRepository,
+      userRepository: userRepository,
     ),
   );
 }

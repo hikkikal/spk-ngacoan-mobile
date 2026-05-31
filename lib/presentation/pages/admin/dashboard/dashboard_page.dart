@@ -9,18 +9,21 @@ import '../../../blocs/auth/auth_state.dart';
 import '../../../blocs/dashboard/dashboard_bloc.dart';
 import '../../../blocs/dashboard/dashboard_event.dart';
 import '../../../blocs/dashboard/dashboard_state.dart';
-import '../../../../data/repositories/supplier_repository.dart';
+import '../../../blocs/user/user_bloc.dart';
 import '../../../blocs/supplier/supplier_bloc.dart';
-import '../supplier/supplier_page.dart';
-import '../../../../data/repositories/criteria_repository.dart';
 import '../../../blocs/criteria/criteria_bloc.dart';
-import '../criteria/criteria_page.dart';
-import '../../../../data/repositories/evaluation_repository.dart';
 import '../../../blocs/evaluation/evaluation_bloc.dart';
-import '../evaluation/evaluation_page.dart';
-import '../../../../data/repositories/decision_history_repository.dart';
 import '../../../blocs/decision_result/decision_result_bloc.dart';
 import '../../../blocs/decision_history/decision_history_bloc.dart';
+import '../../../../data/repositories/user_repository.dart';
+import '../../../../data/repositories/supplier_repository.dart';
+import '../../../../data/repositories/criteria_repository.dart';
+import '../../../../data/repositories/evaluation_repository.dart';
+import '../../../../data/repositories/decision_history_repository.dart';
+import '../user/user_page.dart';
+import '../supplier/supplier_page.dart';
+import '../criteria/criteria_page.dart';
+import '../evaluation/evaluation_page.dart';
 import '../decision_result/decision_result_page.dart';
 import '../decision_history/decision_history_page.dart';
 
@@ -52,6 +55,20 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final isOwner = authState is AuthAuthenticated &&
+        authState.user.role == 'owner';
+
+    // Filter nav items berdasarkan role
+    final List<_NavItem> visibleItems = isOwner
+        ? _navItems
+        : _navItems
+            .where((item) =>
+                item.label == 'Dashboard' ||
+                item.label == 'Supplier' ||
+                item.label == 'Matriks Penilaian')
+            .toList();
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
@@ -62,7 +79,8 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: AppTheme.background,
         drawer: _SideDrawer(
           selectedIndex: _selectedIndex,
-          items: _navItems,
+          items: visibleItems,        // pakai visibleItems
+          allItems: _navItems,        // untuk _buildPage tetap pakai index asli
           onItemSelected: (i) {
             setState(() => _selectedIndex = i);
             Navigator.pop(context);
@@ -116,6 +134,13 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           child: const DecisionHistoryPage(),
         );
+        case 6:
+        return BlocProvider(
+          create: (context) => UserBloc(
+            userRepository: context.read<UserRepository>(),
+          ),
+          child: const UserPage(),
+        );
         default:
           return _PlaceholderPage(
             label: _navItems[index].label,
@@ -139,11 +164,13 @@ class _NavItem {
 class _SideDrawer extends StatelessWidget {
   final int selectedIndex;
   final List<_NavItem> items;
+  final List<_NavItem> allItems; 
   final Function(int) onItemSelected;
 
   const _SideDrawer({
     required this.selectedIndex,
     required this.items,
+    required this.allItems,
     required this.onItemSelected,
   });
 
@@ -184,6 +211,7 @@ class _SideDrawer extends StatelessWidget {
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
+                  final realIndex = allItems.indexOf(item);
                   final isSelected = selectedIndex == index;
                   return _DrawerItem(
                     item: item,

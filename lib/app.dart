@@ -6,6 +6,7 @@ import 'data/repositories/auth_repository.dart';
 import 'data/repositories/supplier_repository.dart';
 import 'data/repositories/criteria_repository.dart';
 import 'data/repositories/evaluation_repository.dart';
+import 'data/repositories/user_repository.dart';
 import 'data/repositories/decision_history_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
@@ -23,6 +24,7 @@ class MyApp extends StatefulWidget {
   final EvaluationRepository evaluationRepository;
   final DecisionHistoryRepository decisionHistoryRepository;
   final DashboardRepository dashboardRepository;
+  final UserRepository userRepository;
 
   const MyApp({
     super.key,
@@ -33,6 +35,7 @@ class MyApp extends StatefulWidget {
     required this.evaluationRepository,
     required this.decisionHistoryRepository,
     required this.dashboardRepository,
+    required this.userRepository,
   });
 
   @override
@@ -58,6 +61,7 @@ class _MyAppState extends State<MyApp> {
         RepositoryProvider.value(value: widget.evaluationRepository),
         RepositoryProvider.value(value: widget.decisionHistoryRepository),
         RepositoryProvider.value(value: widget.dashboardRepository),
+        RepositoryProvider.value(value: widget.userRepository),
       ],
       child: MultiBlocProvider(
         providers: [

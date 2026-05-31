@@ -4,6 +4,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/criteria_model.dart';
 import '../../../../data/models/supplier_model.dart';
 import '../../../../data/models/evaluation_model.dart';
+import '../../../blocs/auth/auth_bloc.dart';
+import '../../../blocs/auth/auth_state.dart';
 import '../../../blocs/evaluation/evaluation_bloc.dart';
 import '../../../blocs/evaluation/evaluation_event.dart';
 import '../../../blocs/evaluation/evaluation_state.dart';
@@ -16,7 +18,6 @@ class EvaluationPage extends StatefulWidget {
 }
 
 class _EvaluationPageState extends State<EvaluationPage> {
-  // Map[supplierId][criteriaId] = controller
   final Map<int, Map<int, TextEditingController>> _controllers = {};
   bool _isDirty = false;
 
@@ -34,6 +35,11 @@ class _EvaluationPageState extends State<EvaluationPage> {
       }
     }
     super.dispose();
+  }
+
+  bool get _isOwner {
+    final authState = context.read<AuthBloc>().state;
+    return authState is AuthAuthenticated && authState.user.role == 'owner';
   }
 
   void _initControllers(
@@ -86,6 +92,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isOwner = _isOwner;
+
     return BlocListener<EvaluationBloc, EvaluationState>(
       listener: (context, state) {
         if (state is EvaluationSaveSuccess) {
@@ -95,8 +103,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
               backgroundColor: const Color(0xFF2DD4BF),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+                  borderRadius: BorderRadius.circular(10)),
             ),
           );
         }
@@ -107,8 +114,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
               backgroundColor: AppTheme.error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+                  borderRadius: BorderRadius.circular(10)),
             ),
           );
         }
@@ -159,16 +165,14 @@ class _EvaluationPageState extends State<EvaluationPage> {
 
             return Column(
               children: [
-                // Header
                 _EvaluationHeader(
                   isSaving: isSaving,
                   isDirty: _isDirty,
-                  onSave: suppliers.isNotEmpty && criterias.isNotEmpty
+                  isOwner: isOwner,
+                  onSave: isOwner && suppliers.isNotEmpty && criterias.isNotEmpty
                       ? () => _onSave(suppliers, criterias)
                       : null,
                 ),
-
-                // Content
                 Expanded(
                   child: suppliers.isEmpty || criterias.isEmpty
                       ? const _EmptyView()
@@ -176,6 +180,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
                           suppliers: suppliers,
                           criterias: criterias,
                           controllers: _controllers,
+                          isOwner: isOwner,
                           onChanged: () {
                             if (!_isDirty) setState(() => _isDirty = true);
                           },
@@ -190,16 +195,16 @@ class _EvaluationPageState extends State<EvaluationPage> {
   }
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-
 class _EvaluationHeader extends StatelessWidget {
   final bool isSaving;
   final bool isDirty;
+  final bool isOwner;
   final VoidCallback? onSave;
 
   const _EvaluationHeader({
     required this.isSaving,
     required this.isDirty,
+    required this.isOwner,
     required this.onSave,
   });
 
@@ -222,14 +227,14 @@ class _EvaluationHeader extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () => Scaffold.of(context).openDrawer(),
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.menu, color: Colors.white, size: 20),
                 ),
-                child: const Icon(Icons.menu, color: Colors.white, size: 20),
-              ),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -261,59 +266,52 @@ class _EvaluationHeader extends StatelessWidget {
                     SizedBox(height: 4),
                     Text(
                       'Isi nilai aktual tiap supplier per kriteria.',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: isSaving ? null : onSave,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSaving
-                        ? Colors.white24
-                        : isDirty
-                            ? AppTheme.primary
-                            : const Color(0xFF2DD4BF),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.save_outlined,
+              if (isOwner)
+                GestureDetector(
+                  onTap: isSaving ? null : onSave,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSaving
+                          ? Colors.white24
+                          : isDirty
+                              ? AppTheme.primary
+                              : const Color(0xFF2DD4BF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
                               color: Colors.white,
-                              size: 16,
+                              strokeWidth: 2,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              isDirty ? 'Simpan*' : 'Simpan',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.save_outlined,
+                                  color: Colors.white, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                isDirty ? 'Simpan*' : 'Simpan',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
             ],
           ),
         ],
@@ -322,18 +320,18 @@ class _EvaluationHeader extends StatelessWidget {
   }
 }
 
-// ── Matrix Content ────────────────────────────────────────────────────────────
-
 class _MatrixContent extends StatelessWidget {
   final List<SupplierModel> suppliers;
   final List<CriteriaModel> criterias;
   final Map<int, Map<int, TextEditingController>> controllers;
+  final bool isOwner;
   final VoidCallback onChanged;
 
   const _MatrixContent({
     required this.suppliers,
     required this.criterias,
     required this.controllers,
+    required this.isOwner,
     required this.onChanged,
   });
 
@@ -349,26 +347,34 @@ class _MatrixContent extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF2DD4BF).withOpacity(0.08),
+              color: isOwner
+                  ? const Color(0xFF2DD4BF).withOpacity(0.08)
+                  : Colors.orange.withOpacity(0.08),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF2DD4BF).withOpacity(0.3),
+                color: isOwner
+                    ? const Color(0xFF2DD4BF).withOpacity(0.3)
+                    : Colors.orange.withOpacity(0.3),
               ),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: Color(0xFF2DD4BF),
+                Icon(
+                  isOwner ? Icons.info_outline : Icons.visibility_outlined,
+                  color: isOwner ? const Color(0xFF2DD4BF) : Colors.orange,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Isi nilai aktual masing-masing supplier pada setiap kriteria, lalu tekan Simpan.',
-                    style: const TextStyle(
+                    isOwner
+                        ? 'Isi nilai aktual masing-masing supplier pada setiap kriteria, lalu tekan Simpan.'
+                        : 'Anda hanya dapat melihat data matriks penilaian.',
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF2DD4BF),
+                      color: isOwner
+                          ? const Color(0xFF2DD4BF)
+                          : Colors.orange,
                       height: 1.4,
                     ),
                   ),
@@ -378,7 +384,6 @@ class _MatrixContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Per supplier card
           ...suppliers.asMap().entries.map((entry) {
             final index = entry.key;
             final supplier = entry.value;
@@ -394,12 +399,9 @@ class _MatrixContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Supplier header
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
+                        horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withOpacity(0.05),
                       borderRadius: const BorderRadius.only(
@@ -428,40 +430,30 @@ class _MatrixContent extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              supplier.name,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          supplier.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                       ],
                     ),
                   ),
-
-                  // Criteria inputs
                   Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(
                       children: criterias.asMap().entries.map((cEntry) {
-                        final cIndex = cEntry.key;
                         final criteria = cEntry.value;
                         final isBenefit = criteria.type == 'benefit';
-                        final ctrl =
-                            controllers[supplier.id]?[criteria.id] ??
-                                TextEditingController();
+                        final ctrl = controllers[supplier.id]?[criteria.id] ??
+                            TextEditingController();
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
                             children: [
-                              // Criteria info
                               Expanded(
                                 flex: 3,
                                 child: Column(
@@ -471,9 +463,7 @@ class _MatrixContent extends StatelessWidget {
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
-                                          ),
+                                              horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
                                             color: AppTheme.primary
                                                 .withOpacity(0.1),
@@ -515,48 +505,53 @@ class _MatrixContent extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 12),
-
-                              // Input field
                               Expanded(
                                 flex: 2,
                                 child: TextFormField(
                                   controller: ctrl,
+                                  enabled: isOwner,
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                          decimal: true),
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
+                                    color: isOwner
+                                        ? AppTheme.textPrimary
+                                        : AppTheme.textSecondary,
                                   ),
                                   decoration: InputDecoration(
                                     hintText: '0',
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 10,
-                                    ),
+                                    filled: !isOwner,
+                                    fillColor: !isOwner
+                                        ? AppTheme.background
+                                        : Colors.white,
+                                    contentPadding:
+                                        const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 10),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                       borderSide: const BorderSide(
-                                        color: AppTheme.divider,
-                                      ),
+                                          color: AppTheme.divider),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                       borderSide: const BorderSide(
-                                        color: AppTheme.divider,
-                                      ),
+                                          color: AppTheme.divider),
+                                    ),
+                                    disabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: const BorderSide(
+                                          color: AppTheme.divider),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                       borderSide: BorderSide(
-                                        color: AppTheme.primary,
-                                        width: 1.5,
-                                      ),
+                                          color: AppTheme.primary, width: 1.5),
                                     ),
                                   ),
-                                  onChanged: (_) => onChanged(),
+                                  onChanged: isOwner ? (_) => onChanged() : null,
                                 ),
                               ),
                             ],
@@ -569,15 +564,12 @@ class _MatrixContent extends StatelessWidget {
               ),
             );
           }).toList(),
-
           const SizedBox(height: 80),
         ],
       ),
     );
   }
 }
-
-// ── Empty View ────────────────────────────────────────────────────────────────
 
 class _EmptyView extends StatelessWidget {
   const _EmptyView();
@@ -596,11 +588,8 @@ class _EmptyView extends StatelessWidget {
                 color: AppTheme.primary.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.grid_on_outlined,
-                size: 40,
-                color: AppTheme.primary,
-              ),
+              child: Icon(Icons.grid_on_outlined,
+                  size: 40, color: AppTheme.primary),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -623,8 +612,6 @@ class _EmptyView extends StatelessWidget {
     );
   }
 }
-
-// ── Error View ────────────────────────────────────────────────────────────────
 
 class _ErrorView extends StatelessWidget {
   final String message;
@@ -660,9 +647,7 @@ class _ErrorView extends StatelessWidget {
               onTap: onRetry,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                    horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(10),

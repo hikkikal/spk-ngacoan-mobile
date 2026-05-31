@@ -1,37 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../data/models/supplier_model.dart';
+import '../../../../data/models/user_model.dart';
 import '../../../blocs/auth/auth_bloc.dart';
 import '../../../blocs/auth/auth_state.dart';
-import '../../../blocs/supplier/supplier_bloc.dart';
-import '../../../blocs/supplier/supplier_event.dart';
-import '../../../blocs/supplier/supplier_state.dart';
-import 'supplier_form_dialog.dart';
+import '../../../blocs/user/user_bloc.dart';
+import '../../../blocs/user/user_event.dart';
+import '../../../blocs/user/user_state.dart';
+import 'user_form_dialog.dart';
 
-class SupplierPage extends StatefulWidget {
-  const SupplierPage({super.key});
+class UserPage extends StatefulWidget {
+  const UserPage({super.key});
 
   @override
-  State<SupplierPage> createState() => _SupplierPageState();
+  State<UserPage> createState() => _UserPageState();
 }
 
-class _SupplierPageState extends State<SupplierPage> {
+class _UserPageState extends State<UserPage> {
   @override
   void initState() {
     super.initState();
-    context.read<SupplierBloc>().add(const SupplierLoadRequested());
+    context.read<UserBloc>().add(const UserLoadRequested());
   }
 
-  List<SupplierModel> _getSuppliers(SupplierState state) {
-    if (state is SupplierLoaded) return state.suppliers;
-    if (state is SupplierActionLoading) return state.suppliers;
-    if (state is SupplierActionSuccess) return state.suppliers;
-    if (state is SupplierActionError) return state.suppliers;
+  List<UserModel> _getUsers(UserState state) {
+    if (state is UserLoaded) return state.users;
+    if (state is UserActionLoading) return state.users;
+    if (state is UserActionSuccess) return state.users;
+    if (state is UserActionError) return state.users;
     return [];
   }
 
-  bool get _isOwner {
+  bool _isOwner(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
     return authState is AuthAuthenticated && authState.user.role == 'owner';
   }
@@ -41,30 +41,30 @@ class _SupplierPageState extends State<SupplierPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => BlocProvider.value(
-        value: context.read<SupplierBloc>(),
-        child: const SupplierFormDialog(),
+        value: context.read<UserBloc>(),
+        child: const UserFormDialog(),
       ),
     );
   }
 
-  void _openEditDialog(SupplierModel supplier) {
+  void _openEditDialog(UserModel user) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => BlocProvider.value(
-        value: context.read<SupplierBloc>(),
-        child: SupplierFormDialog(supplier: supplier),
+        value: context.read<UserBloc>(),
+        child: UserFormDialog(user: user),
       ),
     );
   }
 
-  void _confirmDelete(SupplierModel supplier) {
+  void _confirmDelete(BuildContext context, UserModel user) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
-          'Hapus Supplier',
+          'Hapus User',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: RichText(
@@ -75,9 +75,9 @@ class _SupplierPageState extends State<SupplierPage> {
               height: 1.5,
             ),
             children: [
-              const TextSpan(text: 'Hapus supplier '),
+              const TextSpan(text: 'Hapus akun '),
               TextSpan(
-                text: supplier.name,
+                text: user.name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
@@ -95,9 +95,7 @@ class _SupplierPageState extends State<SupplierPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context
-                  .read<SupplierBloc>()
-                  .add(SupplierDeleteRequested(id: supplier.id));
+              context.read<UserBloc>().add(UserDeleteRequested(id: user.id));
             },
             child: const Text(
               'Hapus',
@@ -111,11 +109,11 @@ class _SupplierPageState extends State<SupplierPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isOwner = _isOwner;
+    final isOwner = _isOwner(context);
 
-    return BlocListener<SupplierBloc, SupplierState>(
+    return BlocListener<UserBloc, UserState>(
       listener: (context, state) {
-        if (state is SupplierActionSuccess) {
+        if (state is UserActionSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -127,7 +125,7 @@ class _SupplierPageState extends State<SupplierPage> {
             ),
           );
         }
-        if (state is SupplierActionError) {
+        if (state is UserActionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -143,27 +141,29 @@ class _SupplierPageState extends State<SupplierPage> {
       child: SafeArea(
         child: Column(
           children: [
-            _SupplierHeader(onAdd: isOwner ? _openAddDialog : null),
+            _UserHeader(
+              onAdd: isOwner ? _openAddDialog : null,
+            ),
             Expanded(
-              child: BlocBuilder<SupplierBloc, SupplierState>(
+              child: BlocBuilder<UserBloc, UserState>(
                 builder: (context, state) {
-                  if (state is SupplierLoading) {
+                  if (state is UserLoading) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (state is SupplierError) {
+                  if (state is UserError) {
                     return _ErrorView(
                       message: state.message,
                       onRetry: () => context
-                          .read<SupplierBloc>()
-                          .add(const SupplierLoadRequested()),
+                          .read<UserBloc>()
+                          .add(const UserLoadRequested()),
                     );
                   }
 
-                  final suppliers = _getSuppliers(state);
-                  final isActionLoading = state is SupplierActionLoading;
+                  final users = _getUsers(state);
+                  final isActionLoading = state is UserActionLoading;
 
-                  if (suppliers.isEmpty) {
+                  if (users.isEmpty) {
                     return _EmptyView(
                       isOwner: isOwner,
                       onAdd: _openAddDialog,
@@ -174,16 +174,15 @@ class _SupplierPageState extends State<SupplierPage> {
                     children: [
                       ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                        itemCount: suppliers.length,
+                        itemCount: users.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
-                          final supplier = suppliers[index];
-                          return _SupplierCard(
-                            supplier: supplier,
-                            index: index,
+                          final user = users[index];
+                          return _UserCard(
+                            user: user,
                             isOwner: isOwner,
-                            onEdit: () => _openEditDialog(supplier),
-                            onDelete: () => _confirmDelete(supplier),
+                            onEdit: () => _openEditDialog(user),
+                            onDelete: () => _confirmDelete(context, user),
                           );
                         },
                       ),
@@ -208,10 +207,12 @@ class _SupplierPageState extends State<SupplierPage> {
   }
 }
 
-class _SupplierHeader extends StatelessWidget {
+// ── Header ────────────────────────────────────────────────────────────────────
+
+class _UserHeader extends StatelessWidget {
   final VoidCallback? onAdd;
 
-  const _SupplierHeader({required this.onAdd});
+  const _UserHeader({required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +244,7 @@ class _SupplierHeader extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               const Text(
-                'Supplier',
+                'Manajemen Karyawan',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -261,7 +262,7 @@ class _SupplierHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Mitra Pemasok',
+                      'Manajemen User',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -270,8 +271,11 @@ class _SupplierHeader extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Kelola daftar supplier yang akan dievaluasi.',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                      'Kelola akun pengguna yang dapat mengakses sistem.',
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -313,25 +317,39 @@ class _SupplierHeader extends StatelessWidget {
   }
 }
 
-class _SupplierCard extends StatelessWidget {
-  final SupplierModel supplier;
-  final int index;
+// ── User Card ─────────────────────────────────────────────────────────────────
+
+class _UserCard extends StatelessWidget {
+  final UserModel user;
   final bool isOwner;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _SupplierCard({
-    required this.supplier,
-    required this.index,
+  const _UserCard({
+    required this.user,
     required this.isOwner,
     required this.onEdit,
     required this.onDelete,
   });
 
+  Color _roleColor(String? role) {
+    switch (role) {
+      case 'owner':
+        return const Color(0xFFF59E0B);
+      case 'karyawan':
+        return const Color(0xFF2DD4BF);
+      default:
+        return AppTheme.textSecondary;
+    }
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final kode = 'A${index + 1}';
-
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -340,85 +358,114 @@ class _SupplierCard extends StatelessWidget {
         border: Border.all(color: AppTheme.divider),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                kode,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primary,
-                ),
+          // Avatar
+          CircleAvatar(
+            backgroundColor: _roleColor(user.role).withOpacity(0.12),
+            radius: 22,
+            child: Text(
+              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: _roleColor(user.role),
               ),
             ),
           ),
           const SizedBox(width: 12),
+
+          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  supplier.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
+                // Nama + Role badge
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined,
-                        size: 12, color: AppTheme.textSecondary),
+                    Expanded(
+                      child: Text(
+                        user.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (user.role != null && user.role!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _roleColor(user.role).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _capitalize(user.role!),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _roleColor(user.role),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+
+                // Username
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.alternate_email,
+                      size: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      user.username,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+
+                // Email
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.email_outlined,
+                      size: 12,
+                      color: AppTheme.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        supplier.address,
+                        user.email,
                         style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary),
-                        maxLines: 1,
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                if (supplier.phone != null && supplier.phone!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.phone_outlined,
-                          size: 12, color: AppTheme.textSecondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        supplier.phone!,
-                        style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Tidak ada nomor telepon',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textSecondary,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-          if (isOwner)
+
+          // Actions — hanya owner
+          if (isOwner) ...[
+            const SizedBox(width: 8),
             Column(
               children: [
                 _ActionButton(
@@ -434,6 +481,7 @@ class _SupplierCard extends StatelessWidget {
                 ),
               ],
             ),
+          ],
         ],
       ),
     );
@@ -467,6 +515,8 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
+// ── Empty View ────────────────────────────────────────────────────────────────
+
 class _EmptyView extends StatelessWidget {
   final bool isOwner;
   final VoidCallback onAdd;
@@ -487,11 +537,15 @@ class _EmptyView extends StatelessWidget {
                 color: AppTheme.primary.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.store_outlined, size: 40, color: AppTheme.primary),
+              child: Icon(
+                Icons.people_outline,
+                size: 40,
+                color: AppTheme.primary,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Belum ada supplier',
+              'Belum ada user',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -500,7 +554,7 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Tambahkan supplier pertama untuk mulai evaluasi.',
+              'Tambahkan user untuk memberikan akses ke sistem.',
               style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -510,7 +564,9 @@ class _EmptyView extends StatelessWidget {
                 onTap: onAdd,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
                     borderRadius: BorderRadius.circular(10),
@@ -521,7 +577,7 @@ class _EmptyView extends StatelessWidget {
                       Icon(Icons.add, color: Colors.white, size: 16),
                       SizedBox(width: 6),
                       Text(
-                        'Tambah Supplier',
+                        'Tambah User',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -539,6 +595,8 @@ class _EmptyView extends StatelessWidget {
     );
   }
 }
+
+// ── Error View ────────────────────────────────────────────────────────────────
 
 class _ErrorView extends StatelessWidget {
   final String message;
@@ -574,7 +632,9 @@ class _ErrorView extends StatelessWidget {
               onTap: onRetry,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(10),
