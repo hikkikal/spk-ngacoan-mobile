@@ -13,6 +13,10 @@ dependencies:
     sdk: flutter
   intl: any
 
+  google_maps_flutter: ^2.9.0
+  google_places_flutter: ^2.0.9
+  uuid: ^4.4.0
+
   # API & Networking
   dio: ^5.7.0
 
