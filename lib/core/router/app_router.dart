@@ -29,7 +29,7 @@ class AppRouter {
             state.matchedLocation == otp;
 
         // Masih loading sesi — tahan di splash
-        if (authState is AuthLoading || authState is AuthInitial) {
+        if (authState is AuthInitial) {
           return isOnSplash ? null : splash;
         }
 

@@ -15,7 +15,8 @@ class DateFormatter {
         dt = DateTime.parse(raw).toLocal();
       } else {
         // Tidak ada timezone → asumsi UTC, konversi ke lokal
-        dt = DateTime.parse('${raw.replaceAll(' ', 'T')}Z').toLocal();
+        dt = DateTime.parse('${raw.replaceAll(' ', 'T')}Z')
+            .add(const Duration(hours: 7));
       }
       return _fmt.format(dt);
     } catch (_) {

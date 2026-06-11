@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/network/dio_client.dart';
 import 'core/services/secure_storage_service.dart';
 import 'data/repositories/auth_repository.dart';
@@ -15,6 +16,8 @@ import 'app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await initializeDateFormatting('id');
+
   // Init services
   final secureStorage = SecureStorageService();
   final dioClient = DioClient();
@@ -27,7 +30,8 @@ void main() async {
   final supplierRepository = SupplierRepository(dioClient: dioClient);
   final criteriaRepository = CriteriaRepository(dioClient: dioClient);
   final evaluationRepository = EvaluationRepository(dioClient: dioClient);
-  final decisionHistoryRepository = DecisionHistoryRepository(dioClient: dioClient);
+  final decisionHistoryRepository =
+      DecisionHistoryRepository(dioClient: dioClient);
   final dashboardRepository = DashboardRepository(dioClient: dioClient);
   final userRepository = UserRepository(dioClient: dioClient);
 

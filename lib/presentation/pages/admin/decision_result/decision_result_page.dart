@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:spk_ngacoan/core/utils/date_formatter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/decision_history_model.dart';
 import '../../../../data/models/decision_history_detail_model.dart';
@@ -102,9 +103,8 @@ class _DecisionResultPageState extends State<DecisionResultPage> {
                   return const _EmptyView();
                 }
 
-                final detail = state is DecisionResultLoaded
-                    ? state.detail
-                    : null;
+                final detail =
+                    state is DecisionResultLoaded ? state.detail : null;
 
                 if (detail == null) return const SizedBox();
 
@@ -285,7 +285,7 @@ class _ResultContent extends StatelessWidget {
                           children: [
                             const TextSpan(text: 'Terakhir dikalkulasi: '),
                             TextSpan(
-                              text: _formatDate(detail.calculatedAt),
+                              text: DateFormatter.format(detail.calculatedAt),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
@@ -355,9 +355,7 @@ class _ResultContent extends StatelessWidget {
                     _TableHeader(label: 'Kode', flex: 1),
                     _TableHeader(label: 'Nama Pemasok', flex: 3),
                     _TableHeader(
-                        label: 'Score (AS)',
-                        flex: 2,
-                        align: TextAlign.right),
+                        label: 'Score (AS)', flex: 2, align: TextAlign.right),
                   ],
                 ),
               ),
@@ -533,8 +531,7 @@ class _RankingRow extends StatelessWidget {
                     result.supplierName,
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight:
-                          isTop ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isTop ? FontWeight.bold : FontWeight.normal,
                       color: AppTheme.textPrimary,
                     ),
                   ),
@@ -542,8 +539,8 @@ class _RankingRow extends StatelessWidget {
                 if (isTop) ...[
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2DD4BF).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -569,9 +566,7 @@ class _RankingRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: isTop
-                    ? const Color(0xFF2DD4BF)
-                    : AppTheme.textPrimary,
+                color: isTop ? const Color(0xFF2DD4BF) : AppTheme.textPrimary,
               ),
             ),
           ),
@@ -629,16 +624,6 @@ class _EdasStepsDialogState extends State<_EdasStepsDialog> {
     '3. Matriks NDA',
     '4. SP, SN & AS',
   ];
-
-  String _formatDate(String? raw) {
-    if (raw == null) return '-';
-    try {
-      final dt = DateTime.parse(raw).toLocal();
-      return DateFormat("d MMM yyyy 'pukul' HH.mm", 'id').format(dt);
-    } catch (_) {
-      return raw;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -753,7 +738,7 @@ class _EdasStepsDialogState extends State<_EdasStepsDialog> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             child: Text(
-              'Dikalkulasi: ${_formatDate(detail.calculatedAt)}',
+              'Dikalkulasi: ${DateFormatter.format(detail.calculatedAt)}',
               style: const TextStyle(
                 fontSize: 11,
                 color: AppTheme.textSecondary,
@@ -768,7 +753,8 @@ class _EdasStepsDialogState extends State<_EdasStepsDialog> {
   Widget _buildTabContent(DecisionHistoryDetailModel detail) {
     switch (_selectedTab) {
       case 0:
-        return _AvTab(avMatrix: detail.avMatrix, headers: detail.criteriaHeaders);
+        return _AvTab(
+            avMatrix: detail.avMatrix, headers: detail.criteriaHeaders);
       case 1:
         return _MatrixTab(
           title: 'Matriks Jarak Positif dari Rata-rata (PDA)',
@@ -855,11 +841,9 @@ class _EdasStepsDialogState extends State<_EdasStepsDialog> {
                   : AppTheme.textSecondary;
 
               return Container(
-                color: isTop
-                    ? const Color(0xFF2DD4BF).withOpacity(0.04)
-                    : null,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                color: isTop ? const Color(0xFF2DD4BF).withOpacity(0.04) : null,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Icon(Icons.emoji_events_rounded,
@@ -869,8 +853,7 @@ class _EdasStepsDialogState extends State<_EdasStepsDialog> {
                       flex: 1,
                       child: Text(r.supplierCode,
                           style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary)),
+                              fontSize: 12, color: AppTheme.textSecondary)),
                     ),
                     Expanded(
                       flex: 3,
@@ -881,9 +864,8 @@ class _EdasStepsDialogState extends State<_EdasStepsDialog> {
                               r.supplierName,
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: isTop
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                                fontWeight:
+                                    isTop ? FontWeight.bold : FontWeight.normal,
                                 color: AppTheme.textPrimary,
                               ),
                             ),
@@ -894,12 +876,11 @@ class _EdasStepsDialogState extends State<_EdasStepsDialog> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2DD4BF)
-                                    .withOpacity(0.1),
+                                color: const Color(0xFF2DD4BF).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: const Color(0xFF2DD4BF)
-                                      .withOpacity(0.3),
+                                  color:
+                                      const Color(0xFF2DD4BF).withOpacity(0.3),
                                 ),
                               ),
                               child: const Text('Terbaik',
@@ -974,8 +955,7 @@ class _AvTab extends StatelessWidget {
               children: [
                 // Header row
                 TableRow(
-                  decoration:
-                      const BoxDecoration(color: Color(0xFFF5F5F5)),
+                  decoration: const BoxDecoration(color: Color(0xFFF5F5F5)),
                   children: avMatrix
                       .map(
                         (av) => Padding(
@@ -1069,12 +1049,11 @@ class _MatrixTab extends StatelessWidget {
               children: [
                 // Header row
                 TableRow(
-                  decoration:
-                      const BoxDecoration(color: Color(0xFFF5F5F5)),
+                  decoration: const BoxDecoration(color: Color(0xFFF5F5F5)),
                   children: [
                     const Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       child: Text(
                         'Supplier',
                         style: TextStyle(
@@ -1121,8 +1100,7 @@ class _MatrixTab extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 10),
                           child: Text(
-                            (row.criteriaValues[h] ?? 0.0)
-                                .toStringAsFixed(4),
+                            (row.criteriaValues[h] ?? 0.0).toStringAsFixed(4),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 11,
@@ -1194,8 +1172,7 @@ class _FinalTab extends StatelessWidget {
               children: [
                 // Header
                 TableRow(
-                  decoration:
-                      const BoxDecoration(color: Color(0xFFF5F5F5)),
+                  decoration: const BoxDecoration(color: Color(0xFFF5F5F5)),
                   children: const [
                     _FinalCell(text: 'Supplier', isHeader: true),
                     _FinalCell(text: 'Score SP', isHeader: true),
@@ -1226,16 +1203,14 @@ class _FinalTab extends StatelessWidget {
                       _FinalCell(text: row.scoreSn.toStringAsFixed(4)),
                       _FinalCell(
                         text: row.nsp.toStringAsFixed(4),
-                        color: row.nsp == maxNsp
-                            ? const Color(0xFF3B82F6)
-                            : null,
+                        color:
+                            row.nsp == maxNsp ? const Color(0xFF3B82F6) : null,
                         isBold: row.nsp == maxNsp,
                       ),
                       _FinalCell(
                         text: row.nss.toStringAsFixed(4),
-                        color: row.nss == maxNss
-                            ? const Color(0xFF8B5CF6)
-                            : null,
+                        color:
+                            row.nss == maxNss ? const Color(0xFF8B5CF6) : null,
                         isBold: row.nss == maxNss,
                       ),
                       _FinalCell(
@@ -1279,8 +1254,7 @@ class _FinalCell extends StatelessWidget {
         textAlign: align,
         style: TextStyle(
           fontSize: isHeader ? 11 : 11,
-          fontWeight:
-              isHeader || isBold ? FontWeight.bold : FontWeight.normal,
+          fontWeight: isHeader || isBold ? FontWeight.bold : FontWeight.normal,
           color: color ??
               (isHeader ? AppTheme.textSecondary : AppTheme.textPrimary),
         ),

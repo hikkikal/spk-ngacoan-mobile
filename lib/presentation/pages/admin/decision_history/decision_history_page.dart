@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:spk_ngacoan/core/utils/date_formatter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/decision_history_model.dart';
 import '../../../../data/models/decision_history_detail_model.dart';
@@ -30,16 +31,6 @@ class _DecisionHistoryPageState extends State<DecisionHistoryPage> {
     if (state is DecisionHistoryAuditLoaded) return state.histories;
     if (state is DecisionHistoryAuditError) return state.histories;
     return [];
-  }
-
-  String _formatDate(String? raw) {
-    if (raw == null) return '-';
-    try {
-      final dt = DateTime.parse(raw).toLocal();
-      return DateFormat("d MMM yyyy 'pukul' HH.mm", 'id').format(dt);
-    } catch (_) {
-      return raw;
-    }
   }
 
   void _requestAudit(int id) {
@@ -113,7 +104,7 @@ class _DecisionHistoryPageState extends State<DecisionHistoryPage> {
                       final candidateCount = h.rankings.length;
 
                       return _HistoryCard(
-                        date: _formatDate(h.calculatedAt),
+                        date: DateFormatter.format(h.calculatedAt),
                         topName: topName,
                         topCode: topCode,
                         candidateCount: candidateCount,
@@ -327,12 +318,11 @@ class _HistoryCard extends StatelessWidget {
               GestureDetector(
                 onTap: isLoading ? null : onLihatAudit,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isLoading
-                        ? AppTheme.divider
-                        : const Color(0xFF1A1A1A),
+                    color:
+                        isLoading ? AppTheme.divider : const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: isLoading
@@ -379,16 +369,6 @@ class _AuditDialog extends StatelessWidget {
   final DecisionHistoryDetailModel detail;
 
   const _AuditDialog({required this.detail});
-
-  String _formatDate(String? raw) {
-    if (raw == null) return '-';
-    try {
-      final dt = DateTime.parse(raw).toLocal();
-      return DateFormat("d MMM yyyy 'pukul' HH.mm", 'id').format(dt);
-    } catch (_) {
-      return raw;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -442,7 +422,7 @@ class _AuditDialog extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        _formatDate(detail.calculatedAt),
+                        DateFormatter.format(detail.calculatedAt),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -529,8 +509,7 @@ class _AuditDialog extends StatelessWidget {
                         child: ListView.separated(
                           shrinkWrap: true,
                           itemCount: detail.rankings.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 1),
+                          separatorBuilder: (_, __) => const Divider(height: 1),
                           itemBuilder: (_, index) {
                             // ✅ Pakai RankingItemModel langsung
                             final r = detail.rankings[index];
@@ -715,8 +694,8 @@ class _ErrorView extends StatelessWidget {
             GestureDetector(
               onTap: onRetry,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(10),
