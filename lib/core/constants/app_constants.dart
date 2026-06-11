@@ -9,5 +9,5 @@ class AppConstants {
   // - Maps SDK for iOS
   // - Places API
   // - Geocoding API
-  static const String googleMapsApiKey = 'AIzaSyDxgqf84c_SUB07RnfJaUNhb5FnlhTDd6M';
+  static const String googleMapsApiKey = 'ISI API KEY';
 }
