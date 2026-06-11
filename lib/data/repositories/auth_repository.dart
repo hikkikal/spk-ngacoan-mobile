@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../../core/network/dio_client.dart';
@@ -17,13 +18,20 @@ class AuthRepository {
         _secureStorage = secureStorage;
 
   Future<UserModel> login({
-  required String email,
-  required String password,
+    required String email,
+    required String password,
   }) async {
     String deviceName = 'Flutter Web';
     if (!kIsWeb) {
-      if (Platform.isAndroid) deviceName = 'Android';
-      else if (Platform.isIOS) deviceName = 'iOS';
+      final deviceInfo = DeviceInfoPlugin();
+
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceName = '${androidInfo.manufacturer} ${androidInfo.model}';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceName = iosInfo.name;
+      }
     }
 
     final response = await _dioClient.dio.post(
