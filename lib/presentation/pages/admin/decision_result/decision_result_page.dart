@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:spk_ngacoan/core/utils/date_formatter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/decision_history_model.dart';
@@ -45,26 +44,44 @@ class _DecisionResultPageState extends State<DecisionResultPage> {
           style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context
-                  .read<DecisionResultBloc>()
-                  .add(const DecisionResultHitungUlang());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1A1A1A),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text('Batal'),
+                ),
               ),
-              elevation: 0,
-            ),
-            child: const Text('Hitung Ulang'),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    context
+                        .read<DecisionResultBloc>()
+                        .add(const DecisionResultHitungUlang());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A1A),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text('Hitung Ulang'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -237,16 +254,6 @@ class _ResultContent extends StatelessWidget {
     required this.detail,
     required this.onLihatLangkah,
   });
-
-  String _formatDate(String? raw) {
-    if (raw == null) return '-';
-    try {
-      final dt = DateTime.parse(raw).toLocal();
-      return DateFormat("d MMM yyyy 'pukul' HH.mm", 'id').format(dt);
-    } catch (_) {
-      return raw;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
