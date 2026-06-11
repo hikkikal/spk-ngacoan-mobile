@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../data/repositories/decision_history_repository.dart';
 import '../../../../data/repositories/evaluation_repository.dart';
-import '../../../../data/calculators/edas_calculator.dart';
+import '../../../../data/repositories/criteria_repository.dart';
 import 'decision_result_event.dart';
 import 'decision_result_state.dart';
 
@@ -9,12 +9,15 @@ class DecisionResultBloc
     extends Bloc<DecisionResultEvent, DecisionResultState> {
   final DecisionHistoryRepository _historyRepository;
   final EvaluationRepository _evaluationRepository;
+  final CriteriaRepository _criteriaRepository;
 
   DecisionResultBloc({
     required DecisionHistoryRepository historyRepository,
     required EvaluationRepository evaluationRepository,
+    required CriteriaRepository criteriaRepository,
   })  : _historyRepository = historyRepository,
         _evaluationRepository = evaluationRepository,
+        _criteriaRepository = criteriaRepository,
         super(const DecisionResultInitial()) {
     on<DecisionResultLoadRequested>(_onLoadRequested);
     on<DecisionResultHitungUlang>(_onHitungUlang);
@@ -34,13 +37,9 @@ class DecisionResultBloc
       histories.sort((a, b) => b.id.compareTo(a.id));
       final latest = histories.first;
 
-      // Fetch evaluations & hitung EDAS di Flutter
-      final evaluations = await _evaluationRepository.getEvaluations();
-      final detail = EdasCalculator.calculate(
-        historyId: latest.id,
-        calculatedAt: latest.calculatedAt,
-        evaluations: evaluations,
-      );
+      // Ambil detail dari endpoint history (format lama / format baru)
+      final detail =
+          await _historyRepository.getDecisionHistoryDetail(latest);
 
       emit(DecisionResultLoaded(detail: detail));
     } catch (e) {
@@ -57,21 +56,13 @@ class DecisionResultBloc
         : null;
     emit(DecisionResultHitungLoading(previousDetail: prev));
     try {
-      await _evaluationRepository.calculateEdas();
+      // Fetch kriteria terlebih dahulu — diperlukan untuk mapping ID → kode
+      final criteriaList = await _criteriaRepository.getCriteria();
 
-      final histories = await _historyRepository.getDecisionHistories();
-      if (histories.isEmpty) {
-        emit(const DecisionResultEmpty());
-        return;
-      }
-      histories.sort((a, b) => b.id.compareTo(a.id));
-      final latest = histories.first;
-
-      final evaluations = await _evaluationRepository.getEvaluations();
-      final detail = EdasCalculator.calculate(
-        historyId: latest.id,
-        calculatedAt: latest.calculatedAt,
-        evaluations: evaluations,
+      // Panggil /calculate-edas dan parse langsung dari response-nya
+      // (tidak perlu fetch ulang ke /decision-histories)
+      final detail = await _evaluationRepository.calculateEdas(
+        criteriaList: criteriaList,
       );
 
       emit(DecisionResultLoaded(detail: detail));

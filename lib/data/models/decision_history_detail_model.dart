@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'decision_history_model.dart';
+import 'criteria_model.dart';
 
 // ─── EDAS Matrix Models ───────────────────────────────────────────────────────
 
@@ -69,12 +70,11 @@ class DecisionHistoryDetailModel extends Equatable {
   final String? calculatedAt;
   final List<RankingItemModel> rankings;
 
-  // EDAS computation matrices (nullable — hanya ada jika API mengembalikannya)
-  final List<String> criteriaHeaders;       // ['C1', 'C2', ...]
-  final List<EdasAvModel> avMatrix;         // Tab 1: Solusi AV
-  final List<EdasMatrixRowModel> pdaMatrix; // Tab 2: Matriks PDA
-  final List<EdasMatrixRowModel> ndaMatrix; // Tab 3: Matriks NDA
-  final List<EdasFinalRowModel> finalMatrix; // Tab 4: SP, SN & AS
+  final List<String> criteriaHeaders;
+  final List<EdasAvModel> avMatrix;
+  final List<EdasMatrixRowModel> pdaMatrix;
+  final List<EdasMatrixRowModel> ndaMatrix;
+  final List<EdasFinalRowModel> finalMatrix;
 
   const DecisionHistoryDetailModel({
     required this.historyId,
@@ -89,6 +89,130 @@ class DecisionHistoryDetailModel extends Equatable {
 
   bool get hasEdasMatrices => avMatrix.isNotEmpty;
 
+  // ── Factory: dari response /calculate-edas ─────────────────────────────────
+  //
+  // Format response:
+  //   data.rankings[]  → rank, supplier_id, supplier{code,name}, appraisal_score
+  //   data.calculation_steps:
+  //     average_solutions  : { "criteriaId": value }
+  //     pda_matrix         : { "supplierId": { "criteriaId": value } }
+  //     nda_matrix         : { "supplierId": { "criteriaId": value } }
+  //     sp_scores          : { "supplierId": value }
+  //     sn_scores          : { "supplierId": value }
+  //     nsp_scores         : { "supplierId": value }
+  //     nss_scores         : { "supplierId": value }
+  //     as_scores          : { "supplierId": value }
+  //
+  // criteriaList dioper dari luar (hasil GET /criteria) agar label
+  // kolom menggunakan kode kriteria yang sebenarnya (C1, C2, …) bukan ID.
+  factory DecisionHistoryDetailModel.fromCalculateEdas({
+    required int historyId,
+    String? calculatedAt,
+    required Map<String, dynamic> responseData,
+    required List<CriteriaModel> criteriaList,
+  }) {
+    // ── Peta ID → kode kriteria ──────────────────────────────────────────────
+    final Map<String, String> criteriaCodeById = {
+      for (final c in criteriaList) c.id.toString(): c.code,
+    };
+
+    // ── Rankings ─────────────────────────────────────────────────────────────
+    final List rawRankings = responseData['rankings'] as List? ?? [];
+    final rankings = rawRankings
+        .map((e) => RankingItemModel.fromJson(e as Map<String, dynamic>))
+        .toList()
+      ..sort((a, b) => a.rank.compareTo(b.rank));
+
+    final steps = responseData['calculation_steps'] as Map<String, dynamic>?;
+    if (steps == null) {
+      return DecisionHistoryDetailModel(
+        historyId: historyId,
+        calculatedAt: calculatedAt,
+        rankings: rankings,
+      );
+    }
+
+    // ── Ordered criteria headers (pakai urutan dari average_solutions) ───────
+    final avRaw = steps['average_solutions'] as Map<String, dynamic>? ?? {};
+    final List<String> criteriaHeaders = avRaw.keys
+        .map((id) => criteriaCodeById[id] ?? 'C$id')
+        .toList();
+
+    // ── AV Matrix ─────────────────────────────────────────────────────────────
+    final List<EdasAvModel> avMatrix = avRaw.entries.map((e) {
+      return EdasAvModel(
+        criteriaCode: criteriaCodeById[e.key] ?? 'C${e.key}',
+        avValue: double.tryParse(e.value.toString()) ?? 0.0,
+      );
+    }).toList();
+
+    // ── Supplier info dari rankings ──────────────────────────────────────────
+    final Map<String, String> supplierNameById = {};
+    final Map<String, String> supplierCodeById = {};
+    for (final r in rankings) {
+      supplierNameById[r.supplierId.toString()] = r.supplierName;
+      supplierCodeById[r.supplierId.toString()] = r.supplierCode;
+    }
+
+    // ── Helper: parse { "supplierId": { "criteriaId": value } } ─────────────
+    List<EdasMatrixRowModel> parseMatrixRows(Map<String, dynamic> raw) {
+      return raw.entries.map((supplierEntry) {
+        final sid = supplierEntry.key;
+        final criteriaMap = supplierEntry.value as Map<String, dynamic>;
+        final Map<String, double> values = {};
+        for (final ce in criteriaMap.entries) {
+          final code = criteriaCodeById[ce.key] ?? 'C${ce.key}';
+          values[code] = double.tryParse(ce.value.toString()) ?? 0.0;
+        }
+        return EdasMatrixRowModel(
+          supplierId: int.tryParse(sid) ?? 0,
+          supplierName: supplierNameById[sid] ?? '',
+          supplierCode: supplierCodeById[sid] ?? '',
+          criteriaValues: values,
+        );
+      }).toList()
+        ..sort((a, b) => a.supplierCode.compareTo(b.supplierCode));
+    }
+
+    final pdaMatrix = parseMatrixRows(
+        steps['pda_matrix'] as Map<String, dynamic>? ?? {});
+    final ndaMatrix = parseMatrixRows(
+        steps['nda_matrix'] as Map<String, dynamic>? ?? {});
+
+    // ── Final matrix (SP, SN, NSP, NSS, AS) ──────────────────────────────────
+    final spRaw  = steps['sp_scores']  as Map<String, dynamic>? ?? {};
+    final snRaw  = steps['sn_scores']  as Map<String, dynamic>? ?? {};
+    final nspRaw = steps['nsp_scores'] as Map<String, dynamic>? ?? {};
+    final nssRaw = steps['nss_scores'] as Map<String, dynamic>? ?? {};
+    final asRaw  = steps['as_scores']  as Map<String, dynamic>? ?? {};
+
+    final List<EdasFinalRowModel> finalMatrix = spRaw.keys.map((sid) {
+      return EdasFinalRowModel(
+        supplierId: int.tryParse(sid) ?? 0,
+        supplierName: supplierNameById[sid] ?? '',
+        supplierCode: supplierCodeById[sid] ?? '',
+        scoreSp: double.tryParse(spRaw[sid].toString()) ?? 0.0,
+        scoreSn: double.tryParse(snRaw[sid]?.toString() ?? '0') ?? 0.0,
+        nsp: double.tryParse(nspRaw[sid]?.toString() ?? '0') ?? 0.0,
+        nss: double.tryParse(nssRaw[sid]?.toString() ?? '0') ?? 0.0,
+        appraisalScore: double.tryParse(asRaw[sid]?.toString() ?? '0') ?? 0.0,
+      );
+    }).toList()
+      ..sort((a, b) => b.appraisalScore.compareTo(a.appraisalScore));
+
+    return DecisionHistoryDetailModel(
+      historyId: historyId,
+      calculatedAt: calculatedAt,
+      rankings: rankings,
+      criteriaHeaders: criteriaHeaders,
+      avMatrix: avMatrix,
+      pdaMatrix: pdaMatrix,
+      ndaMatrix: ndaMatrix,
+      finalMatrix: finalMatrix,
+    );
+  }
+
+  // ── Factory: dari response GET /decision-histories/{id} ──────────────────
   factory DecisionHistoryDetailModel.fromRankings({
     required int historyId,
     String? calculatedAt,
@@ -106,7 +230,6 @@ class DecisionHistoryDetailModel extends Equatable {
     );
   }
 
-  /// Factory untuk response lengkap yang mengandung EDAS matrices
   factory DecisionHistoryDetailModel.fromFullResponse({
     required int historyId,
     String? calculatedAt,
@@ -126,7 +249,6 @@ class DecisionHistoryDetailModel extends Equatable {
       );
     }
 
-    // ── Parse AV ──────────────────────────────────────────────────────────────
     final List<EdasAvModel> avMatrix = [];
     final List<String> criteriaHeaders = [];
     final rawAv = edasData['av'] as List? ?? [];
@@ -136,15 +258,11 @@ class DecisionHistoryDetailModel extends Equatable {
       criteriaHeaders.add(av.criteriaCode);
     }
 
-    // ── Parse PDA ─────────────────────────────────────────────────────────────
     final List<EdasMatrixRowModel> pdaMatrix =
         _parseMatrixRows(edasData['pda'], rankings, 'pda_value');
-
-    // ── Parse NDA ─────────────────────────────────────────────────────────────
     final List<EdasMatrixRowModel> ndaMatrix =
         _parseMatrixRows(edasData['nda'], rankings, 'nda_value');
 
-    // ── Parse Final (SP, SN, NSP, NSS, AS) ───────────────────────────────────
     final List<EdasFinalRowModel> finalMatrix = [];
     final rawFinal = edasData['final'] as List? ?? [];
     for (final e in rawFinal) {
@@ -183,8 +301,6 @@ class DecisionHistoryDetailModel extends Equatable {
   ) {
     if (rawData == null) return [];
     final List raw = rawData as List;
-
-    // Group by supplier_id
     final Map<int, Map<String, double>> grouped = {};
     final Map<int, Map<String, String>> supplierInfo = {};
 

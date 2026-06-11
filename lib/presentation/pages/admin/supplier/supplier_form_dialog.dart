@@ -31,7 +31,7 @@ class _SupplierFormDialogState extends State<SupplierFormDialog> {
 
   // Google Maps
   GoogleMapController? _mapController;
-  static const LatLng _defaultCenter = LatLng(-6.2088, 106.8456);
+  static const LatLng _defaultCenter = LatLng(-6.1751, 106.8272); // Jakarta Pusat
   LatLng _pinPosition = _defaultCenter;
   bool _mapReady = false;
 
@@ -403,7 +403,7 @@ class _SupplierFormDialogState extends State<SupplierFormDialog> {
                             GoogleMap(
                               initialCameraPosition: CameraPosition(
                                 target: _pinPosition,
-                                zoom: _isEdit ? 15 : 5,
+                                zoom: _isEdit ? 15 : 12,
                               ),
                               onMapCreated: (controller) {
                                 _mapController = controller;

@@ -28,14 +28,19 @@ class AppRouter {
             state.matchedLocation == forgotPassword ||
             state.matchedLocation == otp;
 
+        // Masih loading sesi — tahan di splash
         if (authState is AuthLoading || authState is AuthInitial) {
           return isOnSplash ? null : splash;
         }
 
+        // Sudah login — langsung ke dashboard, TIDAK lewat splash lagi
         if (authState is AuthAuthenticated) {
-          return isOnAuth || isOnSplash ? dashboard : null;
+          // Kalau sedang di halaman auth atau splash → ke dashboard
+          if (isOnAuth || isOnSplash) return dashboard;
+          return null;
         }
 
+        // Belum login — ke login, kecuali sudah di halaman auth
         if (authState is AuthUnauthenticated) {
           return isOnAuth ? null : login;
         }

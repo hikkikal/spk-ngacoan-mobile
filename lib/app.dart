@@ -80,6 +80,7 @@ class _MyAppState extends State<MyApp> {
             create: (context) => DecisionResultBloc(
               historyRepository: context.read<DecisionHistoryRepository>(),
               evaluationRepository: context.read<EvaluationRepository>(),
+              criteriaRepository: context.read<CriteriaRepository>(),
             ),
           ),
           BlocProvider(

@@ -123,6 +123,7 @@ class _DashboardPageState extends State<DashboardPage> {
         create: (context) => DecisionResultBloc(
           historyRepository: context.read<DecisionHistoryRepository>(),
           evaluationRepository: context.read<EvaluationRepository>(),
+          criteriaRepository: context.read<CriteriaRepository>(),
         ),
         child: const DecisionResultPage(),
       );

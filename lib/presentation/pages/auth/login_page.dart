@@ -42,11 +42,10 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
+      // BlocListener hanya untuk tampilkan error — navigasi diurus router
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            context.go(AppRouter.dashboard);
-          } else if (state is AuthError) {
+          if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -54,6 +53,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
           }
+          // AuthAuthenticated tidak perlu ditangani di sini —
+          // AppRouter.redirect() sudah otomatis push ke /dashboard
         },
         child: SafeArea(
           child: SingleChildScrollView(
@@ -78,18 +79,18 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     'SPK Ngacoan',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
-                  'Masuk ke akun Anda',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
-                    ),
+                    'Masuk ke akun Anda',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
                   ),
                 ),
                 const SizedBox(height: 48),
@@ -183,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Login Button
+                      // Login Button — loading hanya di sini
                       BlocBuilder<AuthBloc, AuthState>(
                         builder: (context, state) {
                           final isLoading = state is AuthLoading;
